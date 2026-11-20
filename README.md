@@ -1,0 +1,87 @@
+# Dev News
+
+Developer tool updates in one place, at **[news.agentwitch.com](https://news.agentwitch.com)**.
+
+New Claude Code release? Cursor shipped a feature? Node.js security release? Dev News collects
+changelogs, release notes and engineering blogs from public sources, merges duplicates, flags what
+is breaking, security-related or a major version, and lets you keep only the categories you care
+about.
+
+## How it works
+
+```
+public sources ──► collector agent ──► reconcile ──► store ──► web UI / JSON API / RSS
+ (feeds, GitHub     (src/agent.js)    (dedupe,       (data/    (filters per reader,
+  releases, raw                         merge, tag)   store.json) saved in the browser)
+  changelogs, pages)
+```
+
+- **Sources** live in [`src/sources.js`](src/sources.js). Each one has a product, a category and a
+  type: `feed` (RSS/Atom), `github-releases`, `markdown-changelog` or `html-links` (reads a public
+  page the way a browser would, for products that publish no feed).
+- **The collector agent** ([`src/agent.js`](src/agent.js)) visits every source every two hours. A source
+  that fails is skipped and reported on `/api/meta`; the rest still update.
+- **Reconciliation** ([`src/reconcile.js`](src/reconcile.js)) merges the same story reported by several
+  sources (same URL, same product version, or near-identical titles within four days) into one item
+  with several links, and tags `breaking`, `security`, `deprecation` and `major`.
+- **Categories**: AI coding assistants, AI SDKs & protocols, Editors & IDEs, Languages & runtimes,
+  Web frameworks, Cloud & DevOps, Databases. Readers include or exclude whole categories or single
+  products; the choice is kept in their browser.
+
+Only public sources are used. No accounts, API keys or credentials are needed to run it.
+
+## API
+
+| Endpoint | What it returns |
+| --- | --- |
+| `GET /api/items` | Updates, newest first |
+| `GET /feed.xml` | The same, as RSS |
+| `GET /api/meta` | Categories, sources and the health of each source |
+| `GET /healthz` | Liveness check |
+
+`/api/items` and `/feed.xml` take the same filters:
+
+| Param | Example | Meaning |
+| --- | --- | --- |
+| `include` | `ai-assistants,editors` | Only these categories |
+| `exclude` | `devops` | Drop these categories |
+| `products` | `claude-code,cursor` | Only these sources |
+| `hide` | `docker` | Drop these sources |
+| `important` | `1` | Only breaking, security, deprecation or major |
+| `tag` | `security` | Only items with this tag |
+| `q` | `mcp` | Text search |
+| `days` | `7` | Only the last N days |
+| `limit`, `offset` | `50`, `0` | Paging (limit max 200) |
+
+Example: an RSS feed of AI tools only, important changes only:
+`https://news.agentwitch.com/feed.xml?include=ai-assistants,ai-sdks&important=1`
+
+## Run it locally
+
+Needs Node.js 20 or newer.
+
+```bash
+npm install
+npm start            # http://localhost:3000, collects on start and every 2 hours
+npm run collect      # one collection run, writes data/store.json
+npm test
+```
+
+Environment variables (all optional):
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `PORT` | `3000` | HTTP port (Railway sets this) |
+| `REFRESH_MINUTES` | `120` | Minutes between collection runs (min 15) |
+| `DATA_DIR` | `./data` | Where the store is written. Point it at a Railway volume to keep history across deploys |
+| `SITE_URL` | `https://news.agentwitch.com` | Used in RSS links |
+
+## Deployment
+
+Railway deploys `main` automatically. There is no CI pipeline in this repository, so please run
+`npm test` before opening a pull request. `main` is protected: every change goes through a pull
+request.
+
+## Contributing
+
+Adding a source is the easiest way to help. See [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,21 @@
+{
+  "name": "dev-news",
+  "version": "0.1.0",
+  "description": "Developer tool updates from public changelogs, release notes and blogs, with category filters.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "collect": "node src/agent.js",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "fast-xml-parser": "^5.12.1"
+  },
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dev News</title>
+  <meta name="description" content="Developer tool updates in one place: Claude Code, Cursor, Copilot, VS Code, Node.js, React and more. Pick the categories you care about.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate" type="application/rss+xml" title="Dev News" href="/feed.xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="/"><span class="logo" aria-hidden="true">◆</span> Dev News</a>
+      <p class="tagline">What changed in your tools this week, from public changelogs and release notes.</p>
+    </div>
+  </header>
+
+  <div class="wrap layout">
+    <aside class="filters" aria-label="Filters">
+      <button class="filters-toggle" type="button" aria-expanded="false" aria-controls="filters-body">Filters <span id="filter-count"></span></button>
+      <div id="filters-body" class="filters-body">
+        <label class="search">
+          <span class="sr-only">Search</span>
+          <input id="q" type="search" placeholder="Search updates…" autocomplete="off">
+        </label>
+        <div class="row">
+          <label class="switch"><input id="important" type="checkbox"> Breaking, security &amp; major only</label>
+        </div>
+        <div class="row">
+          <label for="days">Show</label>
+          <select id="days">
+            <option value="7">last 7 days</option>
+            <option value="30" selected>last 30 days</option>
+            <option value="90">last 90 days</option>
+            <option value="0">everything</option>
+          </select>
+        </div>
+        <div class="cat-head">
+          <h2>Categories</h2>
+          <span><button type="button" class="link" id="all">All</button> · <button type="button" class="link" id="none">None</button></span>
+        </div>
+        <div id="categories" class="categories"></div>
+        <p class="rss"><a id="rss" href="/feed.xml">RSS feed for this selection</a></p>
+      </div>
+    </aside>
+
+    <main>
+      <div class="status" id="status" role="status"></div>
+      <div id="feed" class="feed"></div>
+      <button id="more" class="more" type="button" hidden>Load more</button>
+    </main>
+  </div>
+
+  <footer class="wrap foot">
+    <p>Collected from public sources only by an automated agent, every two hours. <a href="https://github.com/thiennp/dev-news">Source code</a> · <a href="https://github.com/thiennp/dev-news/blob/main/CONTRIBUTING.md">Suggest a source</a> · <a href="/api/meta">Source health</a></p>
+  </footer>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
