@@ -51,6 +51,15 @@ function score(tags) {
     + (tags.includes('major') ? 2 : 0) + (tags.includes('deprecation') ? 1 : 0);
 }
 
+// Some feeds publish scheduled posts with a future date. Those would pin themselves to
+// the top of the list, so fall back to the time we first saw them instead.
+const FUTURE_SLACK_MS = 36 * 3600 * 1000;
+function plausibleDate(date, now = Date.now()) {
+  if (!date) return null;
+  const t = Date.parse(date);
+  return Number.isNaN(t) || t > now + FUTURE_SLACK_MS ? null : date;
+}
+
 export function hashId(s) {
   return crypto.createHash('sha1').update(s).digest('hex').slice(0, 12);
 }
@@ -70,7 +79,10 @@ export function normalize(entries, source, sourceRank) {
       const key = version
         ? `${source.product.toLowerCase()}@${version}`
         : e.url ? url : `${source.id}:${title.toLowerCase()}`;
-      const bullets = body.split('\n').filter((l) => l.startsWith('• ')).map((l) => l.slice(2));
+      const bullets = body.split('\n')
+        .filter((l) => l.startsWith('•'))
+        .map((l) => l.replace(/^•\s*/, '').trim())
+        .filter((l) => l.length > 1);
       // Only the top of long release notes counts, so one PR title deep in a list of
       // hundreds does not mark the whole release as breaking or security.
       const tags = detectTags({ title, body: body.slice(0, 1200), version });
@@ -79,7 +91,7 @@ export function normalize(entries, source, sourceRank) {
         key,
         title,
         url,
-        date: e.date ?? null,
+        date: plausibleDate(e.date),
         product: source.product,
         category: source.category,
         sourceIds: [source.id],
