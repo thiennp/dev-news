@@ -26,7 +26,7 @@ export async function saveStore(store) {
 export function upsert(store, items, now = new Date().toISOString()) {
   for (const item of items) {
     const prev = store.items[item.id];
-    store.items[item.id] = { ...item, firstSeen: prev?.firstSeen ?? now };
+    store.items[item.id] = { ...item, firstSeen: prev?.firstSeen ?? now, ...(prev?.rewrite ? { rewrite: prev.rewrite } : {}) };
   }
   const cutoff = Date.now() - MAX_AGE_DAYS * 864e5;
   const all = Object.values(store.items)

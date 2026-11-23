@@ -25,11 +25,20 @@ public sources ──► collector agent ──► reconcile ──► store ─
 - **Reconciliation** ([`src/reconcile.js`](src/reconcile.js)) merges the same story reported by several
   sources (same URL, same product version, or near-identical titles within four days) into one item
   with several links, and tags `breaking`, `security`, `deprecation` and `major`.
+- **Signal over noise**: marketing, events, certifications and model-catalogue listings are dropped.
+  The default **Highlights** view keeps breaking changes, security fixes, deprecations, new major and
+  minor versions and launches, and rolls each tool's patch releases into one weekly entry
+  ([`src/signal.js`](src/signal.js)). **Everything** shows the rest.
+- **Plain-language rewrites** ([`src/rewrite.js`](src/rewrite.js)): when `ANTHROPIC_API_KEY` is set,
+  Claude rewrites each new item into a short headline, the key changes, a self-contained explanation
+  and, when needed, what to do. It names the actual problem instead of CVE or PR numbers. Without the
+  key, PR/issue references and housekeeping lines are still stripped.
 - **Categories**: AI coding assistants, AI SDKs & protocols, Editors & IDEs, Languages & runtimes,
   Web frameworks, Cloud & DevOps, Databases. Readers include or exclude whole categories or single
   products; the choice is kept in their browser.
 
-Only public sources are used. No accounts, API keys or credentials are needed to run it.
+Only public sources are used. Nothing needs credentials to run; the optional Claude key lives only in
+the hosting environment.
 
 ## API
 
@@ -48,6 +57,8 @@ Only public sources are used. No accounts, API keys or credentials are needed to
 | `exclude` | `devops` | Drop these categories |
 | `products` | `claude-code,cursor` | Only these sources |
 | `hide` | `docker` | Drop these sources |
+| `view` | `all` | Everything instead of the default highlights |
+| `group` | `0` | Do not roll patch releases into weekly digests |
 | `important` | `1` | Only breaking, security, deprecation or major |
 | `tag` | `security` | Only items with this tag |
 | `q` | `mcp` | Text search |
@@ -77,6 +88,8 @@ Environment variables (all optional):
 | `COLLECT_TZ` | `Europe/Berlin` | Time zone for `COLLECT_TIMES` |
 | `REFRESH_MINUTES` | unset | If set, collect every N minutes (min 15) instead of at fixed times |
 | `DATA_DIR` | `./data` | Where the store is written. Point it at a Railway volume to keep history across deploys |
+| `ANTHROPIC_API_KEY` | unset | Turns on plain-language rewrites. Set it in Railway, never in the repo |
+| `REWRITE_MODEL` | `claude-opus-5-5` | Claude model used for rewrites |
 | `SITE_URL` | `https://news.agentwitch.com` | Used in RSS links |
 
 ## Deployment
