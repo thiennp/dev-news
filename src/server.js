@@ -7,10 +7,15 @@ import { SOURCES } from './sources.js';
 import { loadStore } from './store.js';
 import { runAgent } from './agent.js';
 import { filterItems, toRss } from './query.js';
+import { parseTimes, scheduleDaily } from './schedule.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const SITE_URL = process.env.SITE_URL || 'https://news.agentwitch.com';
-const REFRESH_MINUTES = Math.max(15, Number(process.env.REFRESH_MINUTES) || 120);
+// Collection runs on start-up and then at fixed times each day. Setting
+// REFRESH_MINUTES switches to a simple interval instead.
+const COLLECT_TIMES = parseTimes(process.env.COLLECT_TIMES || '07:00,13:00');
+const COLLECT_TZ = process.env.COLLECT_TZ || 'Europe/Berlin';
+const REFRESH_MINUTES = process.env.REFRESH_MINUTES ? Math.max(15, Number(process.env.REFRESH_MINUTES) || 120) : null;
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 
 let store = await loadStore();
@@ -74,7 +79,12 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`[server] listening on :${PORT}, refreshing every ${REFRESH_MINUTES} min`);
+  if (REFRESH_MINUTES) {
+    console.log(`[server] listening on :${PORT}, collecting every ${REFRESH_MINUTES} min`);
+    setInterval(refresh, REFRESH_MINUTES * 60 * 1000).unref();
+  } else {
+    console.log(`[server] listening on :${PORT}, collecting daily at ${COLLECT_TIMES.join(', ')} (${COLLECT_TZ})`);
+    scheduleDaily(COLLECT_TIMES, COLLECT_TZ, refresh);
+  }
   refresh();
-  setInterval(refresh, REFRESH_MINUTES * 60 * 1000).unref();
 });
