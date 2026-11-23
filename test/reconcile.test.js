@@ -61,3 +61,10 @@ test('filters by category include/exclude and hidden products', () => {
   assert.deepEqual(ids('hide=cline'), ['1', '2']);
   assert.deepEqual(ids('important=1'), ['2']);
 });
+
+test('drops empty bullets and future dates', () => {
+  const [item] = normalize([{ title: 'Release 1.2.0', url: 'https://x/1', date: '2999-01-01T00:00:00Z', body: '• Added a\n•\n• \n• Fixed b' }],
+    { id: 'x', product: 'X', category: 'editors' }, 0);
+  assert.deepEqual(item.highlights, ['Added a', 'Fixed b']);
+  assert.equal(item.date, null);
+});
