@@ -19,7 +19,8 @@ public sources ──► collector agent ──► reconcile ──► store ─
 - **Sources** live in [`src/sources.js`](src/sources.js). Each one has a product, a category and a
   type: `feed` (RSS/Atom), `github-releases`, `markdown-changelog` or `html-links` (reads a public
   page the way a browser would, for products that publish no feed).
-- **The collector agent** ([`src/agent.js`](src/agent.js)) visits every source every two hours. A source
+- **The collector agent** ([`src/agent.js`](src/agent.js)) visits every source on start-up and every day
+  at 07:00 and 13:00 Berlin time. A source
   that fails is skipped and reported on `/api/meta`; the rest still update.
 - **Reconciliation** ([`src/reconcile.js`](src/reconcile.js)) merges the same story reported by several
   sources (same URL, same product version, or near-identical titles within four days) into one item
@@ -62,7 +63,7 @@ Needs Node.js 20 or newer.
 
 ```bash
 npm install
-npm start            # http://localhost:3000, collects on start and every 2 hours
+npm start            # http://localhost:3000, collects on start and at 07:00 and 13:00 Berlin time
 npm run collect      # one collection run, writes data/store.json
 npm test
 ```
@@ -72,7 +73,9 @@ Environment variables (all optional):
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `PORT` | `3000` | HTTP port (Railway sets this) |
-| `REFRESH_MINUTES` | `120` | Minutes between collection runs (min 15) |
+| `COLLECT_TIMES` | `07:00,13:00` | Daily collection times (HH:MM, comma-separated) |
+| `COLLECT_TZ` | `Europe/Berlin` | Time zone for `COLLECT_TIMES` |
+| `REFRESH_MINUTES` | unset | If set, collect every N minutes (min 15) instead of at fixed times |
 | `DATA_DIR` | `./data` | Where the store is written. Point it at a Railway volume to keep history across deploys |
 | `SITE_URL` | `https://news.agentwitch.com` | Used in RSS links |
 
