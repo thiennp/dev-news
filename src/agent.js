@@ -8,6 +8,7 @@ import { collectMarkdownChangelog } from './adapters/markdownChangelog.js';
 import { collectHtmlLinks } from './adapters/htmlLinks.js';
 import { normalize, reconcile } from './reconcile.js';
 import { loadStore, saveStore, upsert } from './store.js';
+import { rewriteItems } from './rewrite.js';
 
 const ADAPTERS = {
   feed: collectFeed,
@@ -58,6 +59,8 @@ export async function runAgent({ sources = SOURCES, log = console } = {}) {
   upsert(store, merged);
   store.sources = { ...store.sources, ...health };
   await saveStore(store);
+  const rw = await rewriteItems(store, { log });
+  if (rw.rewritten) await saveStore(store);
   const ok = Object.values(health).filter((h) => h.ok).length;
   log.info?.(`[agent] ${ok}/${sources.length} sources ok, ${merged.length} items, ${Date.now() - started}ms`);
   return store;

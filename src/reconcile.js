@@ -1,9 +1,11 @@
 import crypto from 'node:crypto';
 import { cleanText, excerpt } from './text.js';
+import { isNoise } from './signal.js';
+import { cleanHighlights } from './rewrite.js';
 
 const TAG_RULES = [
   ['breaking', /\bbreaking change|\bbreaking\b|\bno longer supported|\bremoved support/i],
-  ['security', /\bsecurity\b|\bvulnerab|\bCVE-\d{4}-\d+/i],
+  ['security', /\bvulnerab|\bCVE-\d{4}-\d+|\bsecurity (?:release|fix|update|patch|advisory)/i],
   ['deprecation', /\bdeprecat|\bend[- ]of[- ]life\b|\bsunset/i],
 ];
 
@@ -67,8 +69,10 @@ export function hashId(s) {
 // Turns raw entries from one source into normalized items.
 export function normalize(entries, source, sourceRank) {
   const skip = source.skipTitle ? new RegExp(source.skipTitle, 'i') : null;
+  const only = source.onlyTitle ? new RegExp(source.onlyTitle, 'i') : null;
   return entries
-    .filter((e) => e.title && !(skip && skip.test(e.title)))
+    .filter((e) => e.title && !(skip && skip.test(e.title)) && !(only && !only.test(e.title)))
+    .filter((e) => !isNoise({ title: e.title }))
     .slice(0, source.maxItems ?? 30)
     .map((e) => {
       const title = cleanText(e.title).replace(/\s+/g, ' ');
@@ -83,6 +87,7 @@ export function normalize(entries, source, sourceRank) {
         .filter((l) => l.startsWith('•'))
         .map((l) => l.replace(/^•\s*/, '').trim())
         .filter((l) => l.length > 1);
+      const points = cleanHighlights(bullets);
       // Only the top of long release notes counts, so one PR title deep in a list of
       // hundreds does not mark the whole release as breaking or security.
       const tags = detectTags({ title, body: body.slice(0, 1200), version });
@@ -96,9 +101,10 @@ export function normalize(entries, source, sourceRank) {
         category: source.category,
         sourceIds: [source.id],
         links: [{ label: source.product, url }],
-        summary: excerpt(bullets.length ? bullets.slice(0, 3).join('; ') : body),
-        highlights: bullets.slice(0, 8).map((b) => excerpt(b, 200)),
-        moreHighlights: Math.max(bullets.length - 8, 0),
+        summary: excerpt(points.length ? points.slice(0, 3).join('; ') : body),
+        context: excerpt(body, 1200),
+        highlights: points.slice(0, 8).map((b) => excerpt(b, 200)),
+        moreHighlights: Math.max(points.length - 8, 0),
         tags,
         importance: score(tags),
         rank: sourceRank,

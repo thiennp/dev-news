@@ -55,7 +55,7 @@ test('filters by category include/exclude and hidden products', () => {
     { id: '2', title: 'b', product: 'B', category: 'languages', sourceIds: ['go'], tags: ['breaking'], importance: 3, summary: '', highlights: [], date: '2026-11-18T00:00:00Z' },
     { id: '3', title: 'c', product: 'C', category: 'ai-assistants', sourceIds: ['cline'], tags: [], importance: 0, summary: '', highlights: [], date: '2026-11-17T00:00:00Z' },
   ];
-  const ids = (q) => filterItems(items, new URLSearchParams(q)).items.map((i) => i.id);
+  const ids = (q) => filterItems(items, new URLSearchParams(`view=all&${q}`)).items.map((i) => i.id);
   assert.deepEqual(ids('exclude=languages'), ['1', '3']);
   assert.deepEqual(ids('include=languages'), ['2']);
   assert.deepEqual(ids('hide=cline'), ['1', '2']);
